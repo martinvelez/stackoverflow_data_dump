@@ -1,6 +1,34 @@
 require  'nokogiri'
 require "sqlite3"
-require_relative 'tokenize'
+require_relative 'parser'
+
+
+def update_word_counts(lang)
+	puts "count_words(#{lang})"
+	db = SQLite3::Database.new("#{lang}_posts.db")
+	sql = "ALTER TABLE posts ADD COLUMN word_count integer" 
+	begin
+		db.execute(sql)
+	rescue Exception => e
+		puts e
+	end
+	sql = "SELECT * from posts order by id" 
+	stmt_select = db.prepare(sql)
+	sql = "UPDATE posts SET word_count=? WHERE id=?" 
+	stmt_update = db.prepare(sql)
+	rows = stmt_select.execute!
+	puts "Posts = #{rows.size}"
+	db.transaction
+	i = 0
+	rows.each do |row|
+		post_id = row[0]
+		word_count = word_count(row[1])
+		stmt_update.execute(word_count, post_id) 
+		i = i + 1
+		puts "i = #{i}" if i % 100000 == 0
+	end
+	db.commit
+end
 
 
 def extract_words(lang)
@@ -39,14 +67,15 @@ def extract_words(lang)
 				end
 			end
 		end
-		words_hash.update(words_hash) do |w,ps|
-			ps.uniq!
-			ps.sort!	
-		end
 		rows = stmt_select.execute!(last_id)
 		puts "last_id: #{last_id}"
 	end
 
+	puts 'Sorting and removing duplicate snippets from word->snippet'
+	words_hash.update(words_hash) do |w,ps|
+		ps.uniq!
+		ps.sort!	
+	end
 
 	word_count = 0
 	dirty = false

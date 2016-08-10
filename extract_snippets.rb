@@ -2,7 +2,6 @@
 
 require 'digest'
 
-
 # After removing all duplicate snippets, run this method.
 def update_snippet_scores(lang)
 	puts "update_snippet_scores(#{lang})"
@@ -20,7 +19,7 @@ def update_snippet_scores(lang)
 	i = 0
 	db.transaction
 	rows.each do |row|
-		puts "i = #{i}" if i % 10000  == 0
+		puts "i = #{i}" if i % 100000  == 0
 		i = i + 1	
 		score = row[1]
 		favorite_count = row[2]
@@ -53,7 +52,7 @@ def delete_duplicate_snippets(lang)
 	db.transaction
 	rows.each do |row|
 		i = i + 1	
-		puts "i = #{i}" if i % 100  == 0
+		puts "i = #{i}" if i % 100000  == 0
 		ids_str = row[2]
 		# keep one representative
 		rep = ids_str.slice!(0..ids_str.index(',')) 
@@ -94,7 +93,7 @@ def extract_snippets(lang)
 	db_snippets.execute("CREATE TABLE IF NOT EXISTS snippets (id integer, snippet text, score_total integer, favorite_count_total, sha1 varchar(40))")
 	db_snippets.execute("CREATE TABLE IF NOT EXISTS post_snippets (post_id integer, snippet_id integer, score integer, favorite_count integer)")
 
-	trans_size = 10000
+	trans_size = 100000
 
 	# Construct prepared statement, for performance 
 	sql = "INSERT INTO snippets (id, snippet, score_total, favorite_count_total, sha1) VALUES (?, ?, ?, ?, ?)"
