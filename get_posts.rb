@@ -18,6 +18,14 @@ tags = []
 end
 
 
+def create_posts_index(lang)
+	db = SQLite3::Database.new("#{lang}_posts.db")
+	sql = "CREATE INDEX IF NOT EXISTS post_id_idx ON posts (id)"
+	result = db.execute(sql)
+	puts result.inspect
+end
+
+
 def get_posts(lang)
 	# read large xml file
 	fname = "Posts.xml"
@@ -25,7 +33,7 @@ def get_posts(lang)
 
 	# open database
 	db = SQLite3::Database.new("#{lang}_posts.db")
-	db.execute("CREATE TABLE IF NOT EXISTS posts (id integer, body text, owner_display_name varchar(255), creation_date text, last_edit_date text, tags text, score integer, favorite_count integer)")
+	db.execute("CREATE TABLE IF NOT EXISTS posts (id integer, body text, owner_display_name varchar(255), creation_date text, last_edit_date text, tags text, score integer, favorite_count integer, word_count integer)")
 
 
 	# construct prepared statement, for efficiency

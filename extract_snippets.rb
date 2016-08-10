@@ -2,14 +2,6 @@
 
 require 'digest'
 
-def create_indices_post_snippets(lang)
-	db = SQLite3::Database.new("#{lang}_snippets.db")
-	sql = "CREATE INDEX IF NOT EXISTS snippet_id_index ON post_snippets (snippet_id)"
-	db.execute(sql)
-	sql = "CREATE INDEX IF NOT EXISTS post_id_index ON post_snippets (post_id)"
-	db.execute(sql)
-end
-
 
 # After removing all duplicate snippets, run this method.
 def update_snippet_scores(lang)
@@ -37,8 +29,8 @@ def update_snippet_scores(lang)
 		stmt_update.execute(score, favorite_count, row[0])
 	end
 	db.commit
-
 end
+
 
 # After getting posts, run this method.
 # Find duplicate snippets.

@@ -1,15 +1,15 @@
 #!/usr/bin/env ruby
 
-require  'nokogiri'
-require "sqlite3"
 
 require_relative 'get_posts'
 require_relative 'extract_snippets'
+require_relative 'extract_words'
+require_relative 'indices'
 
 
 # Process command line argument
 langs = ["python", "c", "c#", "c++", "java"]
-tbls = ["posts", "snippets", "delete_duplicate_snippets", "create_indices_post_snippets", "update_snippet_scores", "word_posts", "word_snippets"]
+tbls = ["posts", "posts_index", "snippets", "delete_duplicate_snippets", "create_indices", "update_snippet_scores", "words", "word_snippets"]
 
 lang = ARGV[0]
 if langs.nil? or !langs.include?(lang)
@@ -31,16 +31,18 @@ end
 case tbl
 when 'posts'
 	get_posts(lang)
+when 'posts_index'
+	create_posts_index(lang)
 when "snippets"
 	extract_snippets(lang)
-when "create_indices_post_snippets"
-	create_indices_post_snippets(lang)
 when "delete_duplicate_snippets"
 	delete_duplicate_snippets(lang)
 when "update_snippet_scores"
 	update_snippet_scores(lang)
 when 'words'
-when "word_posts"
+	extract_words(lang)	
+when "create_indices"
+	create_indices(lang)
 when "word_snippets"
 	# open database
 	db_snippets = SQLite3::Database.new("#{lang}_snippets.db")
