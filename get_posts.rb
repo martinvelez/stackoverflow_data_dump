@@ -17,15 +17,6 @@ tags = []
 	return tags
 end
 
-
-def create_posts_index(lang)
-	db = SQLite3::Database.new("#{lang}_posts.db")
-	sql = "CREATE INDEX IF NOT EXISTS post_id_idx ON posts (id)"
-	result = db.execute(sql)
-	puts result.inspect
-end
-
-
 def get_posts(lang)
 	# read large xml file
 	fname = "Posts.xml"

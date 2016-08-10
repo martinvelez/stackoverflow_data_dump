@@ -1,9 +1,13 @@
 require "sqlite3"
 
+
 def create_index(lang, idx)
-	db = SQLite3::Database.new("#{lang}_snippets.db")
+	db_name = "#{lang}_snippets.db"	
 	
 	case idx
+	when 'posts_id_idx'
+		db_name = "#{lang}_posts.db"	
+		sql = "CREATE INDEX IF NOT EXISTS #{idx} ON posts (id)"
 	when 'snippets_id_idx'
 		sql = "CREATE INDEX IF NOT EXISTS #{idx} ON snippets (id)"
 	when 'post_snippets_snippet_id_idx'
@@ -21,12 +25,15 @@ def create_index(lang, idx)
 	end
 	
 	begin
+		db = SQLite3::Database.new("#{lang}_snippets.db")
 		result = db.execute(sql)
 	rescue Exception => e
 		result = e	
 	end	
+
 	puts result.inspect
 end
+
 
 def create_indices(lang)
 	indices = []	
@@ -42,3 +49,4 @@ def create_indices(lang)
 		create_index(lang, idx)	
 	end
 end
+
