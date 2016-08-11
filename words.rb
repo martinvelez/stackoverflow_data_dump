@@ -32,78 +32,49 @@ end
 
 
 def extract_words(lang)
-	# open database
 	puts "extract_words(#{lang})"
 	db_posts = SQLite3::Database.new("#{lang}_posts.db")
 	db_snippets = SQLite3::Database.new("#{lang}_snippets.db")
-	db_snippets.execute("CREATE TABLE IF NOT EXISTS words (id integer, word varchar(255) unique)")
-	db_snippets.execute("CREATE TABLE IF NOT EXISTS word_posts (post_id integer, word_id varchar(255))")
+	db_snippets.execute("CREATE TABLE IF NOT EXISTS words (id integer, word varchar(255))")
+	db_snippets.execute("CREATE TABLE IF NOT EXISTS word_posts (word_id integer, post_id integer)")
 
-	trans_size = 100000
-
-	sql = "SELECT * from posts where id > ? order by id LIMIT #{trans_size}" 
-	stmt_select = db_posts.prepare(sql)
-	sql = "INSERT INTO words (id, word) VALUES (?, ?)"
-	stmt_insert_word = db_snippets.prepare(sql)
-	sql = "INSERT INTO word_posts (word_id, post_id) VALUES (?, ?)"
-	stmt_insert_post_word = db_snippets.prepare(sql)
+	stmt_insert_word = db_snippets.prepare("INSERT INTO words (id, word) VALUES (?, ?)")
+	stmt_insert_word_post = db_snippets.prepare("INSERT INTO word_posts (word_id, post_id) VALUES (?, ?)")
 
 	words_hash = {}
-	last_id = 0
-	rows = stmt_select.execute!(last_id)
-	puts "rows.size = #{rows.size}"
-	while !rows.empty?
-		rows.each do |row|	
-			#puts "row[0] = #{row[0]}"
-			post_id = row[0]
-			last_id = row[0]
-			words = tokenize(row[1])
-			#puts words.inspect
-			words.each do |word|
-				if words_hash.has_key?(word)
-					words_hash[word] << post_id
-				else
-					words_hash[word] = []
-				end
+	rows = db_posts.execute("SELECT id, body FROM posts WHERE has_snippet=1 order by id")
+	puts "Posts with Snippets = #{rows.size}"
+	rows.each do |row|	
+		post_id = row[0]
+		words = tokenize(row[1])
+		words.each do |word|
+			if words_hash.has_key?(word) 
+				words_hash[word] << post_id 
+			else
+				words_hash[word] = [post_id]
 			end
 		end
-		rows = stmt_select.execute!(last_id)
-		puts "last_id: #{last_id}"
 	end
-
-	puts 'Sorting and removing duplicate snippets from word->snippet'
-	words_hash.update(words_hash) do |w,ps|
+	puts "Unique Words = #{words_hash.keys.size}"
+	
+	puts 'Sorting and removing post_ids from word_id => post_ids'
+	words_hash.update(words_hash) do |w,ps| 
+		ps.sort!
 		ps.uniq!
-		ps.sort!	
+		ps
 	end
 
-	word_count = 0
-	dirty = false
-	puts "Found #{words_hash.keys.size} unique words."
-	puts "Inserting words and word-to-post into database.  This may take a while."
-	words_hash.each do |w,ps|
-		word_count = word_count + 1
-		if word_count % trans_size == 1
-			db_snippets.transaction
-			dirty = true
-		end
-
-		stmt_insert_word.execute(word_count, w)
-		ps.each do |p|
-			stmt_insert_post_word.execute(word_count, p)
-		end
-			
-		if word_count % trans_size == 0
-			db_snippets.commit	
-			dirty = false
-		end
+	puts "Inserting words and word-to-post into database."
+	w = 0
+	total = words_hash.keys.size
+	db_snippets.transaction
+	words_hash.each do |word,ps|
+		#(puts word; exit) if ps.empty? 
+		w = w + 1
+		puts "#{w} / #{total}" if w % 100000 == 0
+		stmt_insert_word.execute(w, word)
+		ps.each { |p| stmt_insert_word_post.execute(w, p) }	
 	end
-
-	if dirty == true
-		puts 'final commit'
-		db_snippets.commit	
-	end
-
-	puts "word_count = #{word_count}"
-	puts "Finished!"
+	db_snippets.commit	
+	puts "#{w} / #{total}"
 end

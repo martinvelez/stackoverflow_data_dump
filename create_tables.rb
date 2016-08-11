@@ -40,13 +40,14 @@ when "snippets"
 	create_indices(lang)
 	delete_duplicate_snippets(lang)
 	update_snippet_scores(lang)
+	update_has_snippet(lang)
 when 'words'
 	extract_words(lang)	
 	create_indices(lang)
 when "word_snippets"
 	# open database
 	db_snippets = SQLite3::Database.new("#{lang}_snippets.db")
-	sql = "CREATE TABLE IF NOT EXISTS #{tbl} AS SELECT word_id, snippet_id FROM word_posts AS W INNER JOIN post_snippets AS S ON W.post_id=S.post_id;"
+	sql = "CREATE TABLE IF NOT EXISTS #{tbl} AS SELECT word_id, snippet_id FROM word_posts AS W INNER JOIN post_snippets AS S ON W.post_id=S.post_id GROUP by W.word_id, S.snippet_id"
 	db_snippets.execute(sql)
 	result = db_snippets.execute("SELECT count(*) FROM #{tbl}")
 	puts result.inspect
@@ -57,5 +58,4 @@ when "create_indices"
 else
 	create_indices(lang)
 end
-
 
