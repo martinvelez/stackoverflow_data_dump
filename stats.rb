@@ -2,99 +2,103 @@
 
 require 'sqlite3'
 
-
 def number_with_comma(number)
 	number.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
 end
 
+
 def top_words
-	langs = {}
-	langs['c'] = []
-	langs['c#'] = []
-	langs['c++'] = []
-	langs['java'] = []
-	langs['python'] = []
+	tags = ['c', 'c#', 'c++', 'java', 'python']
+	ls = {}
+	tags.each { |tag| ls[tag] = [] }
 
 	s = ''	
-	tags = langs.keys
-	tags.each do |tag|
-		s += " Word | #{tag} | % |"
-	end
+	tags.each { |tag| s += "Word (#{tag}) | Snippets | % |" }
 	s.chop!
 
+	s += "\n"
+	tags.each { |tag| s += ":--- | ---: | ---: |" }
+	s.chop!
+
+	totals = {}
 	tags.each do |tag|
-		db_s = SQLite3::Database.new("#{tag}_snippets.db")
-		total = db_p.execute("SELECT count(*) FROM words")[0][0]
-		langs[tag] << total 
-		result = db_p.execute("SELECT word, c FROM (SELECT word_id, count(*) AS c FROM word_snippets GROUP BY word_id) AS WS join words ON WS.word_id=words.id order by c desc limit 10"
-		langs[tag] << result[0][0] 
-		langs[tag] << result[0][1] 
-		langs[tag] << (result[0][1] / total.to_f) 
+		db = SQLite3::Database.new("#{tag}_snippets.db")
+		total = db.get_first_value("SELECT count(*) FROM word_snippets")
+		rs = db.execute("SELECT word, c FROM (SELECT word_id, count(*) AS c FROM word_snippets GROUP BY word_id) AS W join words ON W.word_id=words.id order by c desc limit 10")
+		rs.each { |r| ls[tag] << [r[0], r[1], (r[1].to_f / total) * 100] }
 	end
+
+	for i in 0..9 do
+		s += "\n"
+		tags.each do |tag|
+			s += "#{ls[tag][i][0]} | #{ls[tag][i][1]} | #{'%.02f' % ls[tag][i][2]} |"
+		end
+		s.chop! 	
+	end
+
+	puts s
+end
+
+
+def collection_stats 
+	tags = ['c', 'c#', 'c++', 'java', 'python']
 	
-end
-
-
-def post_stats
-	tags = ['c', 'c#', 'c++', 'java', 'python']
-	s = 'Tag | All Posts | Posts with Snippets | Snippets | Snippets/Post'
-	s += "\n"
-	s += ':--- | ---: | ---: | ---: | ---:'
+	s = []
+	a = ['Symbol', '|', 'Statistic']
+	b = [':---', '|', ':---']
 	tags.each do |tag|
+		a << '|'
+		a << tag.capitalize 
+		b << '|'
+		b << '---:'
+	end
+	s << a
+	s << b
+	s << ['N', '|', 'Posts with Snippets (documents)']
+	s << ['-', '|', 'all posts']
+	s << ['S', '|', 'Code Snippets']
+	s << ['-', '|', 'avg. # of snippets per post']
+	s << ['-', '|', 'avg. # of snippets per term']
+	s << ['M', '|', 'Terms (unique, case folding)']
+	s << ['-', '|', 'avg. # of tokens (words) per post']
+
+
+	ls = {}
+	tags.each do |tag|
+		ls[tag] = {}
 		db_s = SQLite3::Database.new("#{tag}_snippets.db")
 		db_p = SQLite3::Database.new("#{tag}_posts.db")
-
-		result = db_p.execute("SELECT count(*) FROM posts")
-		p_count = number_with_comma(result[0][0])
-
-		result = db_p.execute("SELECT count(*) FROM posts WHERE has_snippet=1")
-		p_count_s = number_with_comma(result[0][0])
-
-		result = db_s.execute("SELECT count(*) FROM snippets")
-		s_count = number_with_comma(result[0][0])
-
-		result = db_s.execute("SELECT avg(c) FROM (SELECT post_id, count(*) AS c FROM post_snippets GROUP BY post_id)")
-		avg = result[0][0]
-
-		s += "\n"
-		s += "#{tag} | #{p_count} | #{p_count_s } | #{s_count} | #{'%.02f' % avg}"
+		ls[tag]['p'] = db_p.get_first_value("SELECT count(id) FROM posts WHERE has_snippet=1")
+		ls[tag]['p_with_s'] = db_p.get_first_value("SELECT count(id) FROM posts")
+		ls[tag]['s'] = db_s.get_first_value("SELECT count(id) FROM snippets")
+		ls[tag]['avg_s_per_p'] = db_s.get_first_value("SELECT avg(c) FROM (SELECT post_id, count(*) AS c FROM post_snippets GROUP BY post_id)")
+		ls[tag]['avg_s_per_t'] = db_s.get_first_value("SELECT avg(c) FROM (SELECT word_id, count(*) AS c FROM word_snippets GROUP BY word_id)")
+		ls[tag]['t'] = db_s.get_first_value("SELECT count(*) FROM words")
+		ls[tag]['avg_t_per_p'] = db_p.get_first_value("SELECT avg(word_count) FROM posts")
+		db_s.close
+		db_p.close
 	end
 
-	puts s
-end
-
-
-def word_stats
-	tags = ['c', 'c#', 'c++', 'java', 'python']
-	s = 'Tag | Words | Words/Post | Word-to-Snippet Edges | Mean Snippets/Word'
-	s += "\n"
-	s += ':------------- | -------------: | -------------: | -------------: | -------------:'
 	tags.each do |tag|
-		db_s = SQLite3::Database.new("#{tag}_snippets.db")
-		db_p = SQLite3::Database.new("#{tag}_posts.db")
-
-		result = db_s.execute("SELECT count(*) from words")
-		word_count= number_with_comma(result[0][0])
-
-		result = db_p.execute("SELECT avg(word_count) FROM posts")
-		words_per_post = result[0][0]
-
-		result = db_s.execute("SELECT count(*) FROM word_snippets")
-		word_to_snippet = number_with_comma(result[0][0])
-
-		result = db_s.execute("SELECT avg(c) FROM (SELECT word_id, count(*) as c FROM word_snippets GROUP BY word_id) AS t")
-		avg_snippets_per_word = result[0][0]
-
-		s += "\n"
-		s += "#{tag} | #{word_count} | #{'%.02f' % words_per_post } | #{word_to_snippet} | #{'%.02f' % avg_snippets_per_word}"
+		ls[tag].each.with_index(2) do |p,i|
+			s[i] << '|'
+			if [2,3,4,7].include?(i)
+				s[i] << number_with_comma(p[1])	
+			else
+				s[i] << p[1].round(2) 
+			end
+		end
 	end
-	puts s
+
+	s.each { |row| puts row.join(' ')}
 end
 
 choice = ARGV[0].to_i
 case choice
 when 0
-	word_stats
+	collection_stats	
 when 1
 	post_stats
+when 2
+	top_words
 end

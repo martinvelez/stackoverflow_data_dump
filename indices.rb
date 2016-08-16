@@ -15,7 +15,7 @@ def create_index(lang, idx)
 	when 'post_snippets_post_id_idx'
 		sql = "CREATE INDEX IF NOT EXISTS #{idx} ON post_snippets (post_id)"
 	when 'word_word_idx'
-		sql = "CREATE UNIQUE INDEX IF NOT EXIST #{idx} ON words (word)"
+		sql = "CREATE UNIQUE INDEX IF NOT EXISTS #{idx} ON words (word)"
 	when 'word_posts_post_id_idx'
 		sql = "CREATE INDEX IF NOT EXISTS #{idx} ON word_posts (post_id)"	
 	when 'word_posts_snippet_id_idx'
@@ -49,7 +49,7 @@ def create_indices(lang)
 	indices << 'word_word_idx'
 	indices << 'word_posts_post_id_idx'
 	indices << 'word_posts_snippet_id_idx'
-	indicex << 'word_post_word_id_post_id_idx'
+	indices << 'word_post_word_id_post_id_idx'
 	indices << 'word_snippets_word_id_idx'
 	indices << 'word_snippets_snippet_id_idx'
 	indices << 'word_snippets_word_id_snippet_id_idx'

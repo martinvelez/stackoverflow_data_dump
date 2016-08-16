@@ -2,6 +2,25 @@ require  'nokogiri'
 require "sqlite3"
 require_relative 'parser'
 
+def create_word_snippets(lang)
+	puts "create_word_snippets(#{lang})"
+	db_snippets = SQLite3::Database.new("#{lang}_snippets.db")
+	sql = "CREATE TABLE IF NOT EXISTS word_snippets AS SELECT word_id, snippet_id FROM word_posts AS W INNER JOIN post_snippets AS S ON W.post_id=S.post_id GROUP by W.word_id, S.snippet_id"
+	db_snippets.execute(sql)
+	result = db_snippets.execute("SELECT count(*) FROM word_snippets")
+	puts result.inspect
+	create_indices(lang)
+end
+
+
+def create_term_frequency(lang)
+	db = SQLite3::Database.new("#{lang}_snippets.db")
+	sql = "CREATE TABLE IF NOT EXISTS term_frequency AS SELECT word_id, count(*) AS frequency FROM word_snippets group by word_id"
+	db.execute(sql)
+	sql = "SELECT count(*) FROM term_frequency"
+	result = db.execute(sql)
+	puts result.inspect
+end
 
 def update_word_counts(lang)
 	puts "count_words(#{lang})"
@@ -32,7 +51,6 @@ end
 
 
 def extract_words(lang)
-	puts "extract_words(#{lang})"
 	db_posts = SQLite3::Database.new("#{lang}_posts.db")
 	db_snippets = SQLite3::Database.new("#{lang}_snippets.db")
 	db_snippets.execute("CREATE TABLE IF NOT EXISTS words (id integer, word varchar(255))")
