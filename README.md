@@ -23,10 +23,10 @@ My Gems:
 ````
 
 Example 1: Get the posts, snippets, and words used in posts tagged with `c`.
-````
-./create_tables.rb c posts 
-./create_tables.rb c snippets
-./create_tables.rb c words 
+````bash
+$ ./create_tables.rb c posts 
+$ ./create_tables.rb c snippets
+$ ./create_tables.rb c words 
 ````
 
 * The first command creates the `c_posts.db` database file and a `posts` table.
