@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+
 require_relative 'get_posts'
 require_relative 'extract_snippets'
 require_relative 'words'

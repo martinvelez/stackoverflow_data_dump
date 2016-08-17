@@ -1,6 +1,8 @@
 # extract_snippets.rb
 
 require 'digest'
+require  'nokogiri'
+require "sqlite3"
 
 
 def post_to_snippets(text)

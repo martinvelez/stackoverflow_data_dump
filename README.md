@@ -13,4 +13,5 @@ My Ruby:
 
 My Gems:
 
+* nokogiri (1.6.7)
 * sqlite3 (1.3.11)

@@ -1,5 +1,7 @@
 # get_posts.rb
 
+require  'nokogiri'
+require "sqlite3"
 
 def parse_tags_str(tags_str)
 tags = []

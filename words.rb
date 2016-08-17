@@ -1,5 +1,3 @@
-require  'nokogiri'
-require "sqlite3"
 require_relative 'parser'
 
 
