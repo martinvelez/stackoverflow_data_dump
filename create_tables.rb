@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
 
-require_relative 'get_posts'
-require_relative 'extract_snippets'
+require_relative 'posts'
+require_relative 'snippets'
 require_relative 'words'
 require_relative 'indices'
 
