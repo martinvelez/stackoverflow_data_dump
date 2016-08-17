@@ -15,3 +15,21 @@ My Gems:
 
 * nokogiri (1.6.7)
 * sqlite3 (1.3.11)
+
+## Usage
+
+````
+./create_tables.rb LANG TABLE
+````
+
+Example 1: Get the posts, snippets, and words used in posts tagged with `c`.
+````
+./create_tables.rb c posts 
+./create_tables.rb c snippets
+./create_tables.rb c words 
+````
+
+* The first command creates the `c_posts.db` database file and a `posts` table.
+* The second command creates the `c_snippets.db` database file and a `snippets` table.
+* The third command creates the `words` and `word_snippets` tables in the `c_snippets.db` database.
+
