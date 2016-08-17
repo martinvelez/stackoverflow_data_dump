@@ -23,7 +23,7 @@ My Gems:
 ````
 
 Example 1: Get the posts, snippets, and words used in posts tagged with `c`.
-````bash
+````shell
 $ ./create_tables.rb c posts 
 $ ./create_tables.rb c snippets
 $ ./create_tables.rb c words 
